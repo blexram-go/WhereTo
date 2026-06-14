@@ -3,12 +3,15 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/blexram-go/wheretoapp-backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
 func GetWeather(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"temperature": 82,
-		"condition":   "Sunny",
-	})
+	lat := c.Query("lat")
+	lng := c.Query("long")
+
+	weather := services.GetWeather(lat, lng)
+
+	c.JSON(http.StatusOK, weather)
 }

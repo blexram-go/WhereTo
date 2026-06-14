@@ -15,6 +15,7 @@ func main() {
 	api.GET("/health", handlers.Health)
 	api.GET("/weather", handlers.GetWeather)
 	api.GET("/recommendations", handlers.GetRecommendations)
+	api.GET("/places", handlers.GetPlaces)
 
 	fmt.Println("Starting server...")
 	router.Run()
