@@ -2,7 +2,7 @@ package services
 
 import "github.com/blexram-go/wheretoapp-backend/internal/models"
 
-func GetRecommmendations(condition string) []models.Activity {
+func GetRecommendations(condition string) ([]models.Activity, error) {
 	switch condition {
 	case "Sunny", "Clear":
 		return []models.Activity{
@@ -16,7 +16,7 @@ func GetRecommmendations(condition string) []models.Activity {
 				Category:    "Outdoor",
 				Description: "Enjoy a local park",
 			},
-		}
+		}, nil
 	case "Rain":
 		return []models.Activity{
 			{
@@ -29,7 +29,7 @@ func GetRecommmendations(condition string) []models.Activity {
 				Category:    "Indoor",
 				Description: "Relax indoors with a drink",
 			},
-		}
+		}, nil
 	default:
 		return []models.Activity{
 			{
@@ -37,6 +37,6 @@ func GetRecommmendations(condition string) []models.Activity {
 				Category:    "General",
 				Description: "Suggested based on your location.",
 			},
-		}
+		}, nil
 	}
 }
