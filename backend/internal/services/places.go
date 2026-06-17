@@ -2,18 +2,28 @@ package services
 
 import "github.com/blexram-go/wheretoapp-backend/internal/models"
 
-func GetPlaces(category string) []models.Place {
+type PlacesService struct {
+	apiKey string
+}
+
+func NewPlacesService(apiKey string) *PlacesService {
+	return &PlacesService{
+		apiKey: apiKey,
+	}
+}
+
+func (s *PlacesService) GetPlaces(category string) ([]models.Place, error) {
 	switch category {
-	case "Hiking":
+	case "Outdoor":
 		return []models.Place{
 			{
 				Name:     "Griffith Park Hiking Trails",
 				Address:  "Griffith Park, CA",
 				Rating:   4.2,
-				Category: "Hiking",
+				Category: "Outdoor",
 			},
-		}
+		}, nil
 	}
 
-	return []models.Place{}
+	return []models.Place{}, nil
 }
