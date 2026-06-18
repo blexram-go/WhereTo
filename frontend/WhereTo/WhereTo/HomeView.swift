@@ -16,7 +16,7 @@ struct HomeView: View {
                 .fontWeight(.bold)
 
             NavigationLink("Where To?") {
-                Text("Location Search Screen")
+                LocationSearchView()
             }
 
             NavigationLink("What Can I Do In This Weather?") {
