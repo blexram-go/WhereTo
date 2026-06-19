@@ -1,8 +1,8 @@
 //
-//  WhereToUITestsLaunchTests.swift
-//  WhereToUITests
+//  WhereToNewUITestsLaunchTests.swift
+//  WhereToNewUITests
 //
-//  Created by Alexis Gutierrez on 6/12/26.
+//  Created by Alexis Gutierrez on 6/19/26.
 //
 
 import XCTest
