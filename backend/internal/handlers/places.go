@@ -21,7 +21,7 @@ func NewPlacesHandler(placesService *services.PlacesService) *PlacesHandler {
 func (h *PlacesHandler) GetPlaces(c *gin.Context) {
 	category := c.Query("category")
 
-	places, err := h.placesService.GetPlaces(category)
+	places, err := h.placesService.GetPlaces(category, "", "")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: err.Error(),

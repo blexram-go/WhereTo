@@ -13,7 +13,10 @@ type DiscoverHandler struct {
 	placesService  *services.PlacesService
 }
 
-func NewDiscoverHandler(weatherService *services.WeatherService, placesService *services.PlacesService) *DiscoverHandler {
+func NewDiscoverHandler(
+	weatherService *services.WeatherService,
+	placesService *services.PlacesService,
+) *DiscoverHandler {
 	return &DiscoverHandler{
 		weatherService: weatherService,
 		placesService:  placesService,
@@ -36,6 +39,7 @@ func (h *DiscoverHandler) Discover(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: err.Error(),
 		})
+		return
 	}
 
 	activities, err := services.GetRecommendations(weather.Condition)
@@ -43,17 +47,35 @@ func (h *DiscoverHandler) Discover(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: err.Error(),
 		})
+		return
 	}
 
 	var places []models.Place
 
-	if len(activities) > 0 {
-		places, err = h.placesService.GetPlaces(activities[0].Category)
+	seen := make(map[string]bool)
+
+	for _, activity := range activities {
+		results, err := h.placesService.GetPlaces(
+			activity.Name,
+			lat,
+			lng,
+		)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, models.ErrorResponse{
-				Error: err.Error(),
-			})
+			continue
 		}
+
+		for _, place := range results {
+			key := place.Name + place.Address
+
+			if !seen[key] {
+				seen[key] = true
+				places = append(places, place)
+			}
+		}
+	}
+
+	if len(places) > 10 {
+		places = places[:10]
 	}
 
 	response := models.DiscoverResponse{
