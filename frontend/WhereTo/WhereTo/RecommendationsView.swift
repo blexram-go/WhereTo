@@ -6,79 +6,135 @@
 //
 
 import SwiftUI
+import Combine
 
 struct RecommendationsView: View {
-    @State private var weather: WeatherResponse?
-    @State private var activities: [Activity] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+
+    @StateObject
+    private var viewModel = RecommendationsViewModel()
+    
+    @StateObject
+    private var locationManager = LocationManager()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if isLoading {
-                ProgressView("Loading recommendations...")
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else if let errorMessage {
-                Text("Could not load recommendations")
-                    .font(.headline)
 
-                Text(errorMessage)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Weather")
-                    .font(.title2)
-                    .fontWeight(.bold)
+        VStack(alignment: .leading) {
 
-                if let weather {
-                    Text("\(weather.condition) • \(weather.temperature)°")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("No weather loaded yet")
-                        .foregroundStyle(.secondary)
+            if viewModel.isLoading {
+
+                VStack(spacing: 12) {
+
+                    ProgressView()
+
+                    Text("Loading recommendations...")
+                        .foregroundColor(.secondary)
                 }
 
-                Text("Recommended Activities")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                Spacer()
 
-                List(activities) { activity in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(activity.name)
+            } else if let error = viewModel.errorMessage {
+
+                VStack {
+
+                    Text(error)
+                        .foregroundColor(.red)
+                        .padding()
+
+                    Spacer()
+                }
+
+            } else {
+
+                if let weather = viewModel.weather {
+
+                    VStack(alignment: .leading, spacing: 8) {
+
+                        Text("📍 \(weather.city)")
+                            .font(.title)
+                            .fontWeight(.bold)
+
+                        Text(weather.condition)
                             .font(.headline)
 
-                        Text(activity.category)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text("\(Int(weather.temperature))°F")
+                            .font(.largeTitle)
+                            .fontWeight(.semibold)
 
-                        Text(activity.description)
-                            .font(.body)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                }
+
+                List {
+
+                    Section("Recommended Activities") {
+
+                        ForEach(viewModel.activities) { activity in
+
+                            VStack(
+                                alignment: .leading,
+                                spacing: 4
+                            ) {
+
+                                Text(activity.name)
+                                    .font(.headline)
+
+                                Text(activity.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+
+                    Section("Places") {
+
+                        ForEach(viewModel.places) { place in
+
+                            VStack(
+                                alignment: .leading,
+                                spacing: 4
+                            ) {
+
+                                Text(place.name)
+                                    .font(.headline)
+
+                                Text(place.category)
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+
+                                Text(place.address)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+
+                                Text("⭐ \(place.rating, specifier: "%.1f")")
+                                    .font(.caption)
+                            }
+                            .padding(.vertical, 4)
+                        }
                     }
                 }
             }
         }
-        .padding()
-        .navigationTitle("Recommendations")
         .task {
-            await loadData()
+            locationManager.requestLocation()
         }
-    }
-
-    func loadData() async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            async let weatherResult = APIService.shared.fetchWeather()
-            async let recommendationsResult = APIService.shared.fetchRecommendations()
-
-            weather = try await weatherResult
-            activities = try await recommendationsResult.activities
-        } catch {
-            errorMessage = error.localizedDescription
+        .onReceive(locationManager.$latitude.combineLatest(locationManager.$longitude)) { lat, lng in
+            
+            guard let lat = lat,
+                  let lng = lng else { return }
+            
+            Task {
+                await viewModel.loadRecommendations(lat: lat, lng: lng)
+            }
         }
-
-        isLoading = false
+        .refreshable {
+            locationManager.requestLocation()
+        }
+        .navigationTitle("Recommendations")
     }
 }
 

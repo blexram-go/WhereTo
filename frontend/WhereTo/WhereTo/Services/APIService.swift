@@ -2,57 +2,29 @@
 //  APIService.swift
 //  WhereTo
 //
-//  Created by Alexis Gutierrez on 6/17/26.
+//  Created by Brian Ramos on 6/21/26.
 //
 
 import Foundation
 
-struct WeatherResponse: Codable {
-    let temperature: Int
-    let condition: String
-    let city: String
-}
-
-struct Activity: Codable, Identifiable {
-    let id = UUID()
-    let name: String
-    let category: String
-    let description: String
-
-    enum CodingKeys: String, CodingKey {
-        case name
-        case category
-        case description
-    }
-}
-
-struct RecommendationsResponse: Codable {
-    let weather: String
-    let activities: [Activity]
-}
-
-class APIService {
+final class APIService {
     static let shared = APIService()
-
-    private let baseURL = "http://localhost:8080/api/v1"
-
+    
     private init() {}
-
-    func fetchWeather() async throws -> WeatherResponse {
-        guard let url = URL(string: "\(baseURL)/weather") else {
+    
+    func fetchDiscover(lat: Double, lng: Double) async throws -> DiscoverResponse {
+        let urlString = "http://localhost:8080/api/v1/discover?lat=\(lat)&lng=\(lng)"
+        
+        guard let url = URL(string: urlString) else {
             throw URLError(.badURL)
         }
-
-        let (data, _) = try await URLSession.shared.data(from: url)
-        return try JSONDecoder().decode(WeatherResponse.self, from: data)
-    }
-
-    func fetchRecommendations() async throws -> RecommendationsResponse {
-        guard let url = URL(string: "\(baseURL)/recommendations") else {
-            throw URLError(.badURL)
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
         }
-
-        let (data, _) = try await URLSession.shared.data(from: url)
-        return try JSONDecoder().decode(RecommendationsResponse.self, from: data)
-    }
+        
+        return try JSONDecoder().decode(DiscoverResponse.self, from: data)
+     }
 }

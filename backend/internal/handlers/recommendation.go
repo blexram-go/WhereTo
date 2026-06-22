@@ -8,13 +8,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetRecommendations(c *gin.Context) {
+type RecommendationHandler struct {
+	weatherService *services.WeatherService
+}
+
+func NewRecommendationHandler(WeatherService *services.WeatherService) *RecommendationHandler {
+	return &RecommendationHandler{
+		weatherService: WeatherService,
+	}
+}
+
+func (h *RecommendationHandler) GetRecommendations(c *gin.Context) {
 	lat := c.Query("lat")
 	lng := c.Query("lng")
 
-	weather := services.GetWeather(lat, lng)
+	weather, err := h.weatherService.GetWeather(lat, lng)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: err.Error(),
+		})
+	}
 
-	activities := services.GetRecommmendations(weather.Condition)
+	activities, err := services.GetRecommendations(weather)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: err.Error(),
+		})
+	}
 
 	response := models.RecommendationResponse{
 		Weather:    weather.Condition,
