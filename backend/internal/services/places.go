@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
+	"time"
 
 	"github.com/blexram-go/wheretoapp-backend/internal/models"
 )
+
+// Const variable for providing Google Places API the required area to look for activities
+const RADIUS = 2000
 
 type PlacesService struct {
 	apiKey string
@@ -21,11 +26,16 @@ func NewPlacesService(apiKey string) *PlacesService {
 	}
 }
 
+// Simple mapping for activities and recommendations
 var activitySearchMap = map[string]string{
-	"Hiking":      "hiking trail",
-	"Park Visit":  "park",
-	"Museum":      "museum",
-	"Coffee Shop": "coffee shop",
+	"Hiking":           "hiking trail",
+	"Park Visit":       "park",
+	"Museum":           "museum",
+	"Coffee Shop":      "coffee shop",
+	"Movie Theater":    "movie theater",
+	"Shopping Center":  "shopping mall",
+	"City Walk":        "tourist attraction",
+	"Local Attraction": "tourist attraction",
 }
 
 func (s *PlacesService) GetPlaces(activity string, lat, lng string) ([]models.Place, error) {
@@ -49,7 +59,7 @@ func (s *PlacesService) GetPlaces(activity string, lat, lng string) ([]models.Pl
 	payload.TextQuery = searchQuery
 	payload.LocationBias.Circle.Center.Latitude = latFloat
 	payload.LocationBias.Circle.Center.Longitude = lngFloat
-	payload.LocationBias.Circle.Radius = 5000
+	payload.LocationBias.Circle.Radius = RADIUS
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -79,7 +89,9 @@ func (s *PlacesService) GetPlaces(activity string, lat, lng string) ([]models.Pl
 		"places.displayName,places.formattedAddress,places.rating",
 	)
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -115,6 +127,13 @@ func (s *PlacesService) GetPlaces(activity string, lat, lng string) ([]models.Pl
 			Category: activity,
 		})
 	}
+
+	sort.Slice(
+		places,
+		func(i, j int) bool {
+			return places[i].Rating > places[j].Rating
+		},
+	)
 
 	return places, nil
 }

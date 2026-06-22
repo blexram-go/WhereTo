@@ -29,7 +29,7 @@ func (h *RecommendationHandler) GetRecommendations(c *gin.Context) {
 		})
 	}
 
-	activities, err := services.GetRecommendations(weather.Condition)
+	activities, err := services.GetRecommendations(weather)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: err.Error(),

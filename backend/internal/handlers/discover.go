@@ -42,7 +42,7 @@ func (h *DiscoverHandler) Discover(c *gin.Context) {
 		return
 	}
 
-	activities, err := services.GetRecommendations(weather.Condition)
+	activities, err := services.GetRecommendations(weather)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error: err.Error(),
@@ -64,6 +64,10 @@ func (h *DiscoverHandler) Discover(c *gin.Context) {
 			continue
 		}
 
+		if len(results) > 5 {
+			results = results[:5]
+		}
+
 		for _, place := range results {
 			key := place.Name + place.Address
 
@@ -72,10 +76,6 @@ func (h *DiscoverHandler) Discover(c *gin.Context) {
 				places = append(places, place)
 			}
 		}
-	}
-
-	if len(places) > 10 {
-		places = places[:10]
 	}
 
 	response := models.DiscoverResponse{
