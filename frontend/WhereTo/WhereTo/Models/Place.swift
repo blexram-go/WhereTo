@@ -1,15 +1,22 @@
+//
+//  Place.swift
+//  WhereTo
+//
+
 import Foundation
 
-struct Activity: Codable, Identifiable {
+struct Place: Codable, Identifiable {
     let id = UUID()
 
     let name: String
+    let address: String
+    let rating: Double
     let category: String
-    let description: String
 
     enum CodingKeys: String, CodingKey {
         case name
+        case address
+        case rating
         case category
-        case description
     }
 }
