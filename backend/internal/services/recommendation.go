@@ -6,42 +6,14 @@ import (
 	"github.com/blexram-go/wheretoapp-backend/internal/models"
 )
 
-func GetRecommendations(condition string) ([]models.Activity, error) {
-	condition = strings.ToLower(condition)
+func GetRecommendations(
+	weather models.WeatherAPIResponse,
+) ([]models.Activity, error) {
+
+	condition := strings.ToLower(weather.Condition)
+	temp := weather.Temperature
 
 	switch {
-
-	case strings.Contains(condition, "sunny"),
-		strings.Contains(condition, "clear"):
-
-		return []models.Activity{
-			{
-				Name:        "Hiking",
-				Category:    "Outdoor",
-				Description: "Great weather for hiking trails",
-			},
-			{
-				Name:        "Park Visit",
-				Category:    "Outdoor",
-				Description: "Enjoy a local park",
-			},
-		}, nil
-
-	case strings.Contains(condition, "cloud"),
-		strings.Contains(condition, "overcast"):
-
-		return []models.Activity{
-			{
-				Name:        "City Walk",
-				Category:    "Outdoor",
-				Description: "Comfortable weather for exploring",
-			},
-			{
-				Name:        "Local Attraction",
-				Category:    "General",
-				Description: "Visit nearby attractions",
-			},
-		}, nil
 
 	case strings.Contains(condition, "rain"),
 		strings.Contains(condition, "drizzle"):
@@ -50,37 +22,67 @@ func GetRecommendations(condition string) ([]models.Activity, error) {
 			{
 				Name:        "Museum",
 				Category:    "Indoor",
-				Description: "Stay dry while exploring exhibits",
+				Description: "Stay dry while exploring exhibits.",
 			},
 			{
 				Name:        "Coffee Shop",
 				Category:    "Indoor",
-				Description: "Relax indoors with a drink",
+				Description: "Relax indoors with a warm drink.",
 			},
 		}, nil
 
-	case strings.Contains(condition, "fog"),
-		strings.Contains(condition, "mist"):
+	case temp >= 90:
 
 		return []models.Activity{
 			{
-				Name:        "Museum",
+				Name:        "Movie Theater",
 				Category:    "Indoor",
-				Description: "Good option during low visibility conditions",
+				Description: "Too hot outside for extended outdoor activities.",
 			},
 			{
-				Name:        "Coffee Shop",
+				Name:        "Shopping Center",
 				Category:    "Indoor",
-				Description: "Relax indoors",
+				Description: "Stay cool indoors.",
+			},
+		}, nil
+
+	case temp >= 70 && temp < 90:
+
+		return []models.Activity{
+			{
+				Name:        "Hiking",
+				Category:    "Outdoor",
+				Description: "Excellent weather for hiking.",
+			},
+			{
+				Name:        "Park Visit",
+				Category:    "Outdoor",
+				Description: "Enjoy local parks and outdoor spaces.",
+			},
+		}, nil
+
+	case temp >= 50 && temp < 70:
+
+		return []models.Activity{
+			{
+				Name:        "City Walk",
+				Category:    "Outdoor",
+				Description: "Comfortable weather for exploring.",
+			},
+			{
+				Name:        "Local Attraction",
+				Category:    "General",
+				Description: "Visit nearby attractions.",
 			},
 		}, nil
 	}
 
+	// fallback activity
 	return []models.Activity{
 		{
-			Name:        "Explore Local Attractions",
-			Category:    "General",
-			Description: "Suggested based on your location.",
+			Name:        "Coffee Shop",
+			Category:    "Indoor",
+			Description: "Relax indoors.",
 		},
 	}, nil
 }

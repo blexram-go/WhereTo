@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/blexram-go/wheretoapp-backend/internal/models"
 )
@@ -26,7 +27,11 @@ func (s *WeatherService) GetWeather(lat, lng string) (models.WeatherAPIResponse,
 		lng,
 	)
 
-	resp, err := http.Get(url)
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Get(url)
 	if err != nil {
 		return models.WeatherAPIResponse{}, err
 	}
