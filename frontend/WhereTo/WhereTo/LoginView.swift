@@ -13,44 +13,61 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            ZStack {
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.25), Color.white],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                Spacer()
+                VStack(spacing: 22) {
+                    Spacer()
 
-                Text("WhereTo")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    Image("WhereToLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 120)
+                    
+                    Text("WhereTo")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
 
-                Text("Find activities based on your location and weather")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    Text("Find activities based on your location and weather.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
 
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
+                    VStack(spacing: 14) {
+                        TextField("Email", text: $email)
+                            .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
+                        SecureField("Password", text: $password)
+                            .textFieldStyle(.roundedBorder)
+                    }
 
-                NavigationLink {
-                    HomeView()
-                } label: {
-                    Text("Login")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    NavigationLink {
+                        HomeView()
+                    } label: {
+                        Text("Login")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                    }
+
+                    Button("Register") {
+                        print("Register tapped")
+                    }
+                    .foregroundColor(.blue)
+
+                    Spacer()
                 }
-
-                Button("Register") {
-                    print("Register tapped")
-                }
-
-                Spacer()
+                .padding()
             }
-            .padding()
         }
     }
 }

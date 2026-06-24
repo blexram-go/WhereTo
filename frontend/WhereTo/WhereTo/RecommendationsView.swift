@@ -9,124 +9,68 @@ import SwiftUI
 import Combine
 
 struct RecommendationsView: View {
+    let initialLatitude: Double?
+    let initialLongitude: Double?
 
-    @StateObject
-    private var viewModel = RecommendationsViewModel()
+    init(initialLatitude: Double? = nil, initialLongitude: Double? = nil) {
+        self.initialLatitude = initialLatitude
+        self.initialLongitude = initialLongitude
+    }
+
+    @StateObject private var viewModel = RecommendationsViewModel()
+    @StateObject private var locationManager = LocationManager()
     
-    @StateObject
-    private var locationManager = LocationManager()
-
     var body: some View {
-
-        VStack(alignment: .leading) {
+        ZStack {
+            LinearGradient(
+                colors: [Color.blue.opacity(0.18), Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             if viewModel.isLoading {
-
-                VStack(spacing: 12) {
-
-                    ProgressView()
-
-                    Text("Loading recommendations...")
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
+                ProgressView("Finding things to do...")
             } else if let error = viewModel.errorMessage {
-
-                VStack {
-
-                    Text(error)
-                        .foregroundColor(.red)
-                        .padding()
-
-                    Spacer()
-                }
-
+                ErrorView(message: error)
             } else {
+                ScrollView {
 
-                if let weather = viewModel.weather {
+                    VStack(alignment: .leading, spacing: 20) {
+                        if let weather = viewModel.weather {
+                            WeatherCard(weather: weather)
+                        }
 
-                    VStack(alignment: .leading, spacing: 8) {
-
-                        Text("📍 \(weather.city)")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Text(weather.condition)
-                            .font(.headline)
-
-                        Text("\(Int(weather.temperature))°F")
-                            .font(.largeTitle)
-                            .fontWeight(.semibold)
-
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                }
-
-                List {
-
-                    Section("Recommended Activities") {
+                        SectionHeader(title: "Recommended Activities")
 
                         ForEach(viewModel.activities) { activity in
-
-                            VStack(
-                                alignment: .leading,
-                                spacing: 4
-                            ) {
-
-                                Text(activity.name)
-                                    .font(.headline)
-
-                                Text(activity.description)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.vertical, 4)
+                            ActivityCard(activity: activity)
                         }
-                    }
 
-                    Section("Places") {
+                        SectionHeader(title: "Nearby Places")
 
                         ForEach(viewModel.places) { place in
-
-                            VStack(
-                                alignment: .leading,
-                                spacing: 4
-                            ) {
-
-                                Text(place.name)
-                                    .font(.headline)
-
-                                Text(place.category)
-                                    .font(.caption2)
-                                    .foregroundColor(.blue)
-
-                                Text(place.address)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-
-                                Text("⭐ \(place.rating, specifier: "%.1f")")
-                                    .font(.caption)
-                            }
-                            .padding(.vertical, 4)
+                            PlaceCard(place: place)
                         }
                     }
+                    .padding()
                 }
             }
         }
+        .navigationTitle("Recommendations")
         .task {
-            locationManager.requestLocation()
+            if let lat = initialLatitude, let lng = initialLongitude {
+                await viewModel.loadRecommendations(lat: lat, lng: lng)
+            } else {
+                locationManager.requestLocation()
+            }
         }
         .onReceive(locationManager.$latitude.combineLatest(locationManager.$longitude)) { lat, lng in
-            
-            guard let lat = lat,
-                  let lng = lng else { return }
-            
+            guard initialLatitude == nil,
+                  initialLongitude == nil,
+                  let lat,
+                  let lng else { return }
+
             Task {
                 await viewModel.loadRecommendations(lat: lat, lng: lng)
             }
@@ -134,7 +78,153 @@ struct RecommendationsView: View {
         .refreshable {
             locationManager.requestLocation()
         }
-        .navigationTitle("Recommendations")
+    }
+}
+
+struct WeatherCard: View {
+    let weather: Weather
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("📍 \(weather.city)")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text(weather.condition)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+
+            Text("\(Int(weather.temperature))°F")
+                .font(.system(size: 44, weight: .bold))
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+    }
+}
+
+struct SectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.title3)
+            .fontWeight(.bold)
+    }
+}
+
+struct ActivityCard: View {
+    let activity: Activity
+
+    @StateObject private var favoritesStore = FavoritesStore.shared
+
+    var favoriteItem: FavoriteItem {
+        FavoriteItem(
+            id: "activity-\(activity.name)",
+            title: activity.name,
+            subtitle: activity.description,
+            type: .activity
+        )
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: "sparkles")
+                .foregroundColor(.blue)
+                .font(.title2)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(activity.name)
+                    .font(.headline)
+
+                Text(activity.category)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(activity.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                if favoritesStore.isFavorite(favoriteItem) {
+                    favoritesStore.removeFavorite(favoriteItem)
+                } else {
+                    favoritesStore.addFavorite(favoriteItem)
+                }
+            } label: {
+                Image(
+                    systemName: favoritesStore.isFavorite(favoriteItem)
+                    ? "heart.fill"
+                    : "heart"
+                )
+                .foregroundColor(.red)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(
+            color: Color.black.opacity(0.06),
+            radius: 6,
+            x: 0,
+            y: 3
+        )
+    }
+}
+
+struct PlaceCard: View {
+    let place: Place
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(place.name)
+                    .font(.headline)
+
+                Spacer()
+
+                Text("⭐ \(place.rating, specifier: "%.1f")")
+                    .font(.caption)
+            }
+
+            Text(place.category)
+                .font(.caption)
+                .foregroundColor(.blue)
+
+            Text(place.address)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+    }
+}
+
+struct ErrorView: View {
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.largeTitle)
+                .foregroundColor(.orange)
+
+            Text("Something went wrong")
+                .font(.headline)
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
     }
 }
 
