@@ -1,14 +1,14 @@
 //
-//  WhereToTests.swift
-//  WhereToTests
+//  WhereToNewTests.swift
+//  WhereToNewTests
 //
-//  Created by Alexis Gutierrez on 6/12/26.
+//  Created by Alexis Gutierrez on 6/19/26.
 //
 
 import Testing
 @testable import WhereTo
 
-struct WhereToTests {
+struct WhereToNewTests {
 
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
