@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @AppStorage("isLoggedIn") private var isLoggedIn = false
     var body: some View {
         NavigationStack {
             ZStack {
@@ -17,6 +18,7 @@ struct HomeView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
+
 
                 VStack(alignment: .leading, spacing: 24) {
 
@@ -61,6 +63,11 @@ struct HomeView: View {
             }
             .navigationTitle("Home")
             .navigationBarBackButtonHidden(true)
+            .toolbar {
+                Button("Logout") {
+                    isLoggedIn = false
+                }
+            }
         }
     }
 }
