@@ -33,6 +33,7 @@ func main() {
 	api.GET("/recommendations", recommendationHandler.GetRecommendations)
 	api.GET("/places", placesHandler.GetPlaces)
 	api.GET("/discover", discoverHandler.Discover)
+	api.GET("/popular-places", discoverHandler.GetPopularPlaces) // THis will work with the WhereTo button
 
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal(err)
