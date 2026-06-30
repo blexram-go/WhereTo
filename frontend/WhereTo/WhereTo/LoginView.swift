@@ -91,7 +91,7 @@ struct LoginView: View {
                         .cornerRadius(14)
                         .disabled(email.isEmpty || password.isEmpty || isLoggingIn)
                         .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
-
+                        
                         NavigationLink {
                             CreateAccountView()
                         } label: {
@@ -141,8 +141,25 @@ struct LoginView: View {
             return
         }
 
-        isLoggedIn = true
-    }
+        isLoggingIn = true
+
+        Task {
+            do {
+                // waiting for POST /api/v1/login
+                // let response = try await AuthService.shared.login(
+                //     email: email,
+                //     password: password
+                // )
+
+                try await Task.sleep(nanoseconds: 600_000_000)
+
+                isLoggedIn = true
+            } catch {
+                errorMessage = "Login failed. Please try again."
+            }
+
+            isLoggingIn = false
+        }    }
 }
 
 #Preview {
