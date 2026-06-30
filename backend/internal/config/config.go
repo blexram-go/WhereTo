@@ -13,6 +13,7 @@ type Config struct {
 	WeatherAPIKey string
 	PlacesAPIKey  string
 	DatabaseURL   string
+	JWTSecret     string
 }
 
 // Load will actively load the config for the backend system
@@ -38,11 +39,17 @@ func Load() *Config {
 		log.Fatal("DATABASE_URL is not set")
 	}
 
+	jwtSecret := getEnv("JWT_SECRET", "")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not set")
+	}
+
 	return &Config{
 		Port:          getEnv("PORT", "8080"),
 		WeatherAPIKey: weatherAPIKey,
 		PlacesAPIKey:  placesAPIKey,
 		DatabaseURL:   dbURL,
+		JWTSecret:     jwtSecret,
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/blexram-go/wheretoapp-backend/internal/auth"
 	"github.com/blexram-go/wheretoapp-backend/internal/config"
 	"github.com/blexram-go/wheretoapp-backend/internal/database"
 	"github.com/blexram-go/wheretoapp-backend/internal/handlers"
@@ -30,9 +31,10 @@ func main() {
 	// Instantiate repositories, services and handler managers
 	userRepository := repository.NewUserRepository(db)
 
+	jwtService := auth.NewJWTService(cfg.JWTSecret)
 	weatherService := services.NewWeatherService(cfg.WeatherAPIKey)
 	placesService := services.NewPlacesService(cfg.PlacesAPIKey)
-	authService := services.NewAuthService(userRepository)
+	authService := services.NewAuthService(userRepository, jwtService)
 
 	weatherHandler := handlers.NewWeatherHandler(weatherService)
 	recommendationHandler := handlers.NewRecommendationHandler(weatherService)

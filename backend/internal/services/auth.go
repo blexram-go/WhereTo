@@ -4,21 +4,25 @@ import (
 	"errors"
 	"net/mail"
 
+	"github.com/blexram-go/wheretoapp-backend/internal/auth"
 	"github.com/blexram-go/wheretoapp-backend/internal/models"
 	"github.com/blexram-go/wheretoapp-backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
-	userRepo *repository.UserRepository
+	userRepo   *repository.UserRepository
+	jwtService *auth.JWTService
 }
 
 func NewAuthService(
 	userRepo *repository.UserRepository,
+	jwtService *auth.JWTService,
 ) *AuthService {
 
 	return &AuthService{
-		userRepo: userRepo,
+		userRepo:   userRepo,
+		jwtService: jwtService,
 	}
 }
 
@@ -52,18 +56,18 @@ func (s *AuthService) Register(req models.RegisterRequest) error {
 	return s.userRepo.CreateUser(user)
 }
 
-func (s *AuthService) Login(req models.LoginRequest) (string, error) {
+func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, error) {
 	if req.Email == "" {
-		return "", errors.New("email is required")
+		return nil, errors.New("email is required")
 	}
 
 	if req.Password == "" {
-		return "", errors.New("password is required")
+		return nil, errors.New("password is required")
 	}
 
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
-		return "", errors.New("invalid email or password")
+		return nil, errors.New("invalid email or password")
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -71,9 +75,21 @@ func (s *AuthService) Login(req models.LoginRequest) (string, error) {
 		[]byte(req.Password),
 	)
 	if err != nil {
-		return "", errors.New("invalid email or password")
+		return nil, errors.New("invalid email or password")
 	}
 
-	// Will add JWT generation here
-	return "login successful", nil
+	token, err := s.jwtService.GenerateToken(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.LoginResponse{
+		Token:     token,
+		ExpiresIn: int64(auth.TokenTTL.Seconds()),
+		User: models.UserResponse{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+		},
+	}, nil
 }
