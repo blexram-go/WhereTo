@@ -12,6 +12,7 @@ type Config struct {
 	Port          string
 	WeatherAPIKey string
 	PlacesAPIKey  string
+	DatabaseURL   string
 }
 
 // Load will actively load the config for the backend system
@@ -32,10 +33,16 @@ func Load() *Config {
 		log.Fatal("GOOGLE_PLACES_API_KEY is not set")
 	}
 
+	dbURL := getEnv("DATABASE_URL", "")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+
 	return &Config{
 		Port:          getEnv("PORT", "8080"),
 		WeatherAPIKey: weatherAPIKey,
 		PlacesAPIKey:  placesAPIKey,
+		DatabaseURL:   dbURL,
 	}
 }
 
