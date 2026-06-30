@@ -30,3 +30,29 @@ func (h *PlacesHandler) GetPlaces(c *gin.Context) {
 
 	c.JSON(http.StatusOK, places)
 }
+
+func (h *PlacesHandler) GetPopularPlaces(c *gin.Context) {
+	lat := c.Query("lat")
+	lng := c.Query("lng")
+
+	if lat == "" || lng == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: "lat and lng are required",
+		})
+		return
+	}
+
+	places, err := h.placesService.GetPopularPlaces(lat, lng)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Error: err.Error(),
+		})
+		return
+	}
+
+	response := models.PlacesResponse{
+		Places: places,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
