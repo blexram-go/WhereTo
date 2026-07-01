@@ -92,10 +92,10 @@ struct LocationSearchView: View {
         .navigationTitle("Where To?")
 
         .navigationDestination(item: $destinationCoordinate) { coordinate in
-            PopularPlacesView(
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude
-                )
+            RecommendationsView(
+                initialLatitude: coordinate.latitude,
+                initialLongitude: coordinate.longitude
+            )
         }
     }
 

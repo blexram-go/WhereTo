@@ -15,109 +15,103 @@ struct LoginView: View {
     @State private var password = ""
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.28), Color.white],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [Color.blue.opacity(0.28), Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                VStack(spacing: 24) {
-                    Spacer()
+            VStack(spacing: 24) {
+                Spacer()
 
-                    VStack(spacing: 12) {
-                        Image("WhereToLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 125, height: 125)
-                            .clipShape(RoundedRectangle(cornerRadius: 28))
+                VStack(spacing: 12) {
+                    Image("WhereToLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 125, height: 125)
+                        .clipShape(RoundedRectangle(cornerRadius: 28))
 
-                        Text("WhereTo")
-                            .font(.system(size: 42, weight: .bold))
+                    Text("WhereTo")
+                        .font(.system(size: 42, weight: .bold))
 
-                        Text("Find activities based on live weather, location, and nearby places.")
-                            .font(.subheadline)
+                    Text("Find activities based on live weather, location, and nearby places.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                VStack(spacing: 14) {
+                    HStack {
+                        Image(systemName: "envelope")
                             .foregroundStyle(.secondary)
+
+                        TextField("example@email.com", text: $email)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.emailAddress)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(14)
+
+                    HStack {
+                        Image(systemName: "lock")
+                            .foregroundStyle(.secondary)
+
+                        SecureField("Password", text: $password)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(14)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                     }
 
-                    VStack(spacing: 14) {
-                        HStack {
-                            Image(systemName: "envelope")
-                                .foregroundStyle(.secondary)
-
-                            TextField("example@email.com", text: $email)
-                                .textInputAutocapitalization(.never)
-                                .keyboardType(.emailAddress)
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(14)
-                        HStack {
-                            Image(systemName: "lock")
-
-                            SecureField("Password", text: $password)
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(14)
-                        
-                        if let errorMessage {
-                            Text(errorMessage)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                                .multilineTextAlignment(.center)
-                        }
-                        
-
-                        Button {
-                            login()
-                        } label: {
-                            if isLoggingIn {
-                                ProgressView()
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            } else {
-                                Text("Login")
-                                    .fontWeight(.semibold)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            }
-                        }
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
-                        .disabled(email.isEmpty || password.isEmpty || isLoggingIn)
-                        .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
-
-                        NavigationLink {
-                            CreateAccountView()
-                        } label: {
-                            Text("Create an account")
+                    Button {
+                        login()
+                    } label: {
+                        if isLoggingIn {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else {
+                            Text("Login")
                                 .fontWeight(.semibold)
-                                .foregroundColor(.blue)
+                                .frame(maxWidth: .infinity)
+                                .padding()
                         }
-                        
-                        Button("Forgot Password?") {
-
-                        }
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
                     }
-                    .padding()
-                    .background(Color.white.opacity(0.75))
-                    .cornerRadius(24)
-                    .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(14)
+                    .disabled(email.isEmpty || password.isEmpty || isLoggingIn)
+                    .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
 
-                    Spacer()
+                    NavigationLink {
+                        CreateAccountView()
+                    } label: {
+                        Text("Create an account")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    }
+
                 }
                 .padding()
+                .background(Color.white.opacity(0.75))
+                .cornerRadius(24)
+                .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
+
+                Spacer()
             }
+            .padding()
         }
     }
-    
+
     func login() {
         errorMessage = nil
 
@@ -141,10 +135,35 @@ struct LoginView: View {
             return
         }
 
-        isLoggedIn = true
+        isLoggingIn = true
+
+        Task {
+            do {
+                let response = try await AuthService.shared.login(
+                    email: email,
+                    password: password
+                )
+
+                await MainActor.run {
+                    UserDefaults.standard.set(response.token, forKey: "jwt_token")
+                    UserDefaults.standard.set(response.user.username, forKey: "username")
+                    UserDefaults.standard.set(response.user.email, forKey: "email")
+
+                    isLoggedIn = true
+                    isLoggingIn = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isLoggingIn = false
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    LoginView()
+    NavigationStack {
+        LoginView()
+    }
 }

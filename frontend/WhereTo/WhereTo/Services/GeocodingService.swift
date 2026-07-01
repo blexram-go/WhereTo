@@ -7,18 +7,21 @@
 
 import Foundation
 import CoreLocation
+import MapKit
 
 final class GeocodingService {
     static let shared = GeocodingService()
 
-    private let geocoder = CLGeocoder()
-
     private init() {}
 
     func coordinates(for location: String) async throws -> CLLocationCoordinate2D {
-        let placemarks = try await geocoder.geocodeAddressString(location)
+        guard let request = MKGeocodingRequest(addressString: location) else {
+            throw URLError(.badURL)
+        }
 
-        guard let coordinate = placemarks.first?.location?.coordinate else {
+        let mapItems = try await request.mapItems
+
+        guard let coordinate = mapItems.first?.location.coordinate else {
             throw URLError(.cannotFindHost)
         }
 

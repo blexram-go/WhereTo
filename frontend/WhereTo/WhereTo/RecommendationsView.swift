@@ -19,7 +19,7 @@ struct RecommendationsView: View {
 
     @StateObject private var viewModel = RecommendationsViewModel()
     @StateObject private var locationManager = LocationManager()
-    
+
     var body: some View {
         ZStack {
             LinearGradient(
@@ -31,8 +31,12 @@ struct RecommendationsView: View {
 
             if viewModel.isLoading {
                 ProgressView("Finding things to do...")
-            } else if let error = viewModel.errorMessage {
+            } else if let error = viewModel.errorMessage ?? locationManager.errorMessage {
                 ErrorView(message: error)
+            } else if viewModel.weather == nil,
+                      viewModel.activities.isEmpty,
+                      viewModel.places.isEmpty {
+                ProgressView("Preparing recommendations...")
             } else {
                 ScrollView {
 
@@ -41,16 +45,24 @@ struct RecommendationsView: View {
                             WeatherCard(weather: weather)
                         }
 
-                        SectionHeader(title: "Recommended Activities")
+                        if !viewModel.activities.isEmpty {
+                            SectionHeader(title: "Recommended Activities")
 
-                        ForEach(viewModel.activities) { activity in
-                            ActivityCard(activity: activity)
+                            ForEach(viewModel.activities) { activity in
+                                ActivityCard(activity: activity)
+                            }
                         }
 
-                        SectionHeader(title: "Nearby Places")
+                        if !viewModel.places.isEmpty {
+                            SectionHeader(title: "Nearby Places")
 
-                        ForEach(viewModel.places) { place in
-                            PlaceCard(place: place)
+                            ForEach(viewModel.places) { place in
+                                PlaceCard(place: place)
+                            }
+                        }
+
+                        if viewModel.activities.isEmpty && viewModel.places.isEmpty {
+                            EmptyResultsView()
                         }
                     }
                     .padding()
@@ -59,11 +71,7 @@ struct RecommendationsView: View {
         }
         .navigationTitle("Recommendations")
         .task {
-            if let lat = initialLatitude, let lng = initialLongitude {
-                await viewModel.loadRecommendations(lat: lat, lng: lng)
-            } else {
-                locationManager.requestLocation()
-            }
+            await loadInitialRecommendations()
         }
         .onReceive(locationManager.$latitude.combineLatest(locationManager.$longitude)) { lat, lng in
             guard initialLatitude == nil,
@@ -76,6 +84,22 @@ struct RecommendationsView: View {
             }
         }
         .refreshable {
+            await refreshRecommendations()
+        }
+    }
+
+    private func loadInitialRecommendations() async {
+        if let lat = initialLatitude, let lng = initialLongitude {
+            await viewModel.loadRecommendations(lat: lat, lng: lng)
+        } else {
+            locationManager.requestLocation()
+        }
+    }
+
+    private func refreshRecommendations() async {
+        if let lat = initialLatitude, let lng = initialLongitude {
+            await viewModel.loadRecommendations(lat: lat, lng: lng)
+        } else {
             locationManager.requestLocation()
         }
     }
@@ -225,6 +249,29 @@ struct ErrorView: View {
                 .multilineTextAlignment(.center)
         }
         .padding()
+    }
+}
+
+struct EmptyResultsView: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.title)
+                .foregroundStyle(.secondary)
+
+            Text("No recommendations found nearby.")
+                .font(.headline)
+
+            Text("Try a different destination or refresh in a moment.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .cornerRadius(18)
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
     }
 }
 

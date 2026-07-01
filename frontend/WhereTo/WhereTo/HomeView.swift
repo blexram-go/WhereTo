@@ -9,64 +9,64 @@ import SwiftUI
 
 struct HomeView: View {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.25), Color.white],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [Color.blue.opacity(0.25), Color.white],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-
-                VStack(alignment: .leading, spacing: 24) {
-
-                    VStack(spacing: 16) {
-                        NavigationLink {
-                            LocationSearchView()
-                        } label: {
-                            FeatureCard(
-                                title: "Where To?",
-                                subtitle: "Search by destination or current location",
-                                icon: "location.fill",
-                                color: .blue
-                            )
-                        }
-
-                        NavigationLink {
-                            RecommendationsView()
-                        } label: {
-                            FeatureCard(
-                                title: "Weather Activities",
-                                subtitle: "Get ideas based on today's weather",
-                                icon: "cloud.sun.fill",
-                                color: .orange
-                            )
-                        }
-
-                        NavigationLink {
-                            FavoritesView()
-                        } label: {
-                            FeatureCard(
-                                title: "Favorites",
-                                subtitle: "View saved activities",
-                                icon: "heart.fill",
-                                color: .red
-                            )
-                        }
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(spacing: 16) {
+                    NavigationLink {
+                        LocationSearchView()
+                    } label: {
+                        FeatureCard(
+                            title: "Where To?",
+                            subtitle: "Search by destination or current location",
+                            icon: "location.fill",
+                            color: .blue
+                        )
                     }
 
-                    Spacer()
+                    NavigationLink {
+                        RecommendationsView()
+                    } label: {
+                        FeatureCard(
+                            title: "Weather Activities",
+                            subtitle: "Get ideas based on today's weather",
+                            icon: "cloud.sun.fill",
+                            color: .orange
+                        )
+                    }
+
+                    NavigationLink {
+                        FavoritesView()
+                    } label: {
+                        FeatureCard(
+                            title: "Favorites",
+                            subtitle: "View saved activities",
+                            icon: "heart.fill",
+                            color: .red
+                        )
+                    }
                 }
-                .padding()
+
+                Spacer()
             }
-            .navigationTitle("Home")
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                Button("Logout") {
-                    isLoggedIn = false
-                }
+            .padding()
+        }
+        .navigationTitle("Home")
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            Button("Logout") {
+                UserDefaults.standard.removeObject(forKey: "jwt_token")
+                UserDefaults.standard.removeObject(forKey: "username")
+                UserDefaults.standard.removeObject(forKey: "email")
+                isLoggedIn = false
             }
         }
     }
@@ -113,5 +113,7 @@ struct FeatureCard: View {
 }
 
 #Preview {
-    HomeView()
+    NavigationStack {
+        HomeView()
+    }
 }
