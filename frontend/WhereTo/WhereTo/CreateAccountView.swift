@@ -131,23 +131,36 @@ struct CreateAccountView: View {
         
         isCreatingAccount = true
         
+
         Task {
             do {
-                // need POST /api/v1/register
-                // let response = try await AuthService.shared.register(
-                //     name: name,
-                //     email: email,
-                //     password: password
-                // )
-                
-                try await Task.sleep(nanoseconds: 600_000_000)
-                
-                isLoggedIn = true
+                _ = try await AuthService.shared.register(
+                    username: name,
+                    email: email,
+                    password: password
+                )
+
+                let loginResponse = try await AuthService.shared.login(
+                    email: email,
+                    password: password
+                )
+
+                await MainActor.run {
+                    UserDefaults.standard.set(loginResponse.token, forKey: "jwt_token")
+                    UserDefaults.standard.set(loginResponse.user.username, forKey: "username")
+                    UserDefaults.standard.set(loginResponse.user.email, forKey: "email")
+
+                    isLoggedIn = true
+                }
             } catch {
-                errorMessage = "Could not create account. Please try again."
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                }
             }
-            
-            isCreatingAccount = false
+
+            await MainActor.run {
+                isCreatingAccount = false
+            }
         }
     }
 }
