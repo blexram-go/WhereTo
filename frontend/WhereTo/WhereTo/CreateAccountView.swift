@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CreateAccountView: View {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
+    @Environment(\.dismiss) private var dismiss
     @State private var isCreatingAccount = false
     @State private var name = ""
     @State private var email = ""
@@ -151,6 +152,8 @@ struct CreateAccountView: View {
                     UserDefaults.standard.set(loginResponse.user.email, forKey: "email")
 
                     isLoggedIn = true
+                    
+                    dismiss()
                 }
             } catch {
                 await MainActor.run {
